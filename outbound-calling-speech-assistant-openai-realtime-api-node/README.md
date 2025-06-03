@@ -25,6 +25,7 @@ vercel
   - `TWILIO_ACCOUNT_SID`
   - `TWILIO_AUTH_TOKEN`
   - `PHONE_NUMBER_FROM`
+  - `PHONE_NUMBER_EU` (optional - for European destinations)
   - `DOMAIN` (your Vercel deployment URL)
   - `OPENAI_API_KEY`
   - `N8N_WEBHOOK_URL`
@@ -82,10 +83,21 @@ ISC
    ```
    TWILIO_ACCOUNT_SID="your_twilio_account_sid"
    TWILIO_AUTH_TOKEN="your_twilio_auth_token"
-   PHONE_NUMBER_FROM="your_twilio_phone_number"
+   PHONE_NUMBER_FROM="your_twilio_phone_number_us"
+   PHONE_NUMBER_EU="your_twilio_phone_number_eu" (optional - for European destinations)
    DOMAIN="your_ngrok_domain" (without protocol or trailing slash)
    OPENAI_API_KEY="your_openai_api_key"
    ```
+
+## Phone Number Selection
+
+The application automatically selects the appropriate phone number based on the destination:
+
+- **European numbers** (+44, +45, +46, +47, +49, etc.): Uses `PHONE_NUMBER_EU` if configured
+- **US/Canada numbers** (+1): Uses `PHONE_NUMBER_FROM`
+- **Other regions**: Defaults to `PHONE_NUMBER_FROM`
+
+If `PHONE_NUMBER_EU` is not configured, the system will use +4552516958 as a fallback for European destinations.
 
 ## Running the Application
 

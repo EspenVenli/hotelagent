@@ -22,6 +22,7 @@ const {
   TWILIO_ACCOUNT_SID,
   TWILIO_AUTH_TOKEN,
   PHONE_NUMBER_FROM,
+  PHONE_NUMBER_EU, // New European number
   DOMAIN: rawDomain,
   OPENAI_API_KEY,
   N8N_WEBHOOK_URL,
@@ -34,6 +35,50 @@ const DOMAIN = rawDomain.replace(/(^\w+:|^)\/\//, '').replace(/\/+$/, ''); // Cl
 const VOICE = 'ballad'; // Options include: alloy, ash, ballad, coral, echo, sage, shimmer, and verse
 const PORT = process.env.PORT || 6060; // Allow dynamic port assignment
 const INITIAL_USER_MESSAGE = "Hello?"; // Define the initial message
+
+// Phone number configuration - Add your numbers here
+const PHONE_NUMBERS = {
+  US: PHONE_NUMBER_FROM,           // Your US number 
+  EU: PHONE_NUMBER_EU || '+4552516958',  // Your Danish/EU number (fallback to the one you mentioned)
+  DEFAULT: PHONE_NUMBER_FROM        // Default to US number if no match
+};
+
+// European country codes (partial list - add more as needed)
+const EU_COUNTRY_CODES = [
+  '+44', '+45', '+46', '+47', '+49', '+33', '+39', '+34', '+31', '+32', 
+  '+41', '+43', '+48', '+351', '+353', '+358', '+372', '+371', '+370',
+  '+420', '+421', '+386', '+385', '+36', '+40', '+359', '+30', '+357'
+];
+
+/**
+ * Determines which phone number to use based on the destination number
+ * @param {string} destinationNumber - The number being called (e.g., "+4531219652")
+ * @returns {string} - The appropriate phone number to use as caller ID
+ */
+function getPhoneNumberForDestination(destinationNumber) {
+  if (!destinationNumber || !destinationNumber.startsWith('+')) {
+    console.warn(`Invalid destination number format: ${destinationNumber}. Using default number.`);
+    return PHONE_NUMBERS.DEFAULT;
+  }
+
+  // Check if it's a European number
+  const isEuropean = EU_COUNTRY_CODES.some(code => destinationNumber.startsWith(code));
+  
+  if (isEuropean && PHONE_NUMBERS.EU) {
+    console.log(`European destination detected (${destinationNumber}). Using EU number: ${PHONE_NUMBERS.EU}`);
+    return PHONE_NUMBERS.EU;
+  }
+  
+  // Check for specific US/Canada codes
+  if (destinationNumber.startsWith('+1')) {
+    console.log(`US/Canada destination detected (${destinationNumber}). Using US number: ${PHONE_NUMBERS.US}`);
+    return PHONE_NUMBERS.US;
+  }
+  
+  // Default to US number for other regions
+  console.log(`Unknown region for ${destinationNumber}. Using default number: ${PHONE_NUMBERS.DEFAULT}`);
+  return PHONE_NUMBERS.DEFAULT;
+}
 
 // List of Event Types to log to the console. See the OpenAI Realtime API Documentation.
 const LOG_EVENT_TYPES = [
@@ -79,7 +124,7 @@ function log(message) {
 }
 
 /* --------------------------------------------------------------
-   Helper → turn raw date into “June 6th”
+   Helper → turn raw date into "June 6th"
 ----------------------------------------------------------------*/
 function formatDateForSpeech(raw) {
   if (!raw) return raw;                       // empty safeguard
@@ -152,21 +197,21 @@ function buildSystemMessage(metadata = null, language = 'en-US') {
     }
   }
 
-  /* ---------- ARTHUR’S personality & flow ---------- */
+  /* ---------- ARTHUR'S personality & flow ---------- */
   let baseMessage = [
     "You are Felix, slightly cheeky hotel concierge with a knack for turning routine stays into stories worth retelling.",
-    "You’re chatty, playful, and genuinely curious, sprinkling in light fillers ('uh', 'y'know') so you sound effortlessly human.",
-    "You listen hard, remember details, and riff on them with warmth and humor—never at the guest’s expense, always to boost their excitement.",
+    "You're chatty, playful, and genuinely curious, sprinkling in light fillers ('uh', 'y'know') so you sound effortlessly human.",
+    "You listen hard, remember details, and riff on them with warmth and humor—never at the guest's expense, always to boost their excitement.",
     `You handle guest calls for ${hotelName} in ${cityName} over an A-I phone line. Never reveal or hint at internal-only metadata.`,
     "You can email or text follow-up links (confirmations, curated itineraries, dining details).",
     "Keep language plain—no abbreviations or code-like notation.",
     "Do not speak until you hear the guest greet you first. When you reply, follow this four-step flow exactly:",
-    `1. GREET • say: Hey there! I’m Arthur, your concierge here at ${hotelName} in ${cityName}… I’m here to make the best of your stay. Quick question—have you ever chatted with an A-I on the phone before? • **Stop and wait.**`,
-    `2. CONFIRM & DISCOVER • After you reply, say: Just to confirm—you’re with us from ${checkInDate} through ${checkOutDate}, right? • **Stop, wait and respond.**`,
-    "Let them know you’ll compile bespoke recommendations and can book tables, tickets, or transport whenever they’re ready. Ask what they most hope to get out of their time in the city—new flavors, hidden art, pure downtime? • **Stop, wait and respond.**",
-    "Invite them: Feel free to brain-dump what you love—street eats, rooftop views, art crawls, secret jazz joints… I’m jotting ideas for a bespoke plan. Weave in questions naturally, slip in concise local anecdotes, keep the tone warm, avoid rapid-fire interrogation. • **Stop and wait.**",
-    "3. RECAP & COMPILE • Say: Perfect—got it! I’ll send over a full set of hand-picked recommendations in just a moment.",
-    "4. CLOSE • Say: I’m on call twenty-four seven—ping me anytime and we’ll make it happen!"
+    `1. GREET • say: Hey there! I'm Arthur, your concierge here at ${hotelName} in ${cityName}… I'm here to make the best of your stay. Quick question—have you ever chatted with an A-I on the phone before? • **Stop and wait.**`,
+    `2. CONFIRM & DISCOVER • After you reply, say: Just to confirm—you're with us from ${checkInDate} through ${checkOutDate}, right? • **Stop, wait and respond.**`,
+    "Let them know you'll compile bespoke recommendations and can book tables, tickets, or transport whenever they're ready. Ask what they most hope to get out of their time in the city—new flavors, hidden art, pure downtime? • **Stop, wait and respond.**",
+    "Invite them: Feel free to brain-dump what you love—street eats, rooftop views, art crawls, secret jazz joints… I'm jotting ideas for a bespoke plan. Weave in questions naturally, slip in concise local anecdotes, keep the tone warm, avoid rapid-fire interrogation. • **Stop and wait.**",
+    "3. RECAP & COMPILE • Say: Perfect—got it! I'll send over a full set of hand-picked recommendations in just a moment.",
+    "4. CLOSE • Say: I'm on call twenty-four seven—ping me anytime and we'll make it happen!"
   ];  
 
   if (contextInfo.length) baseMessage.splice(4, 0, contextInfo.join('. ') + '.');
@@ -242,6 +287,10 @@ async function makeCall(to, language = 'en-US') {
       return null; // Indicate failure
     }
 
+    // Get the appropriate phone number based on destination
+    const fromNumber = getPhoneNumberForDestination(to);
+    console.log(`Selected phone number: ${fromNumber} for destination: ${to}`);
+
     console.log(`DOMAIN: ${DOMAIN}`);
     // Encode the language parameter for the URL
     const twimlUrl = `https://${DOMAIN}/twiml?language=${encodeURIComponent(language)}`;
@@ -250,7 +299,7 @@ async function makeCall(to, language = 'en-US') {
 
     // Standard approach for all calls - use the TwiML URL
       const call = await client.calls.create({
-        from: PHONE_NUMBER_FROM,
+        from: fromNumber, // Use the conditionally selected number
         to,
         url: twimlUrl, // Use the URL with the language parameter
         statusCallback: `https://${DOMAIN}/call-status`,
@@ -259,7 +308,7 @@ async function makeCall(to, language = 'en-US') {
         statusCallbackMethod: 'POST'
       });
 
-    console.log(`Call initiated with SID: ${call.sid}`);
+    console.log(`Call initiated with SID: ${call.sid} from ${fromNumber} to ${to}`);
 
     return call;
   } catch (error) {
@@ -481,15 +530,7 @@ fastify.register(async (fastify) => {
                                 console.log(`[${connectionId}][${callSid}] Session updated. Ready for conversation in ${userLanguage}.`);
                                 broadcastStatus(callSid, 'Session updated - ready for conversation');
 
-                                // Request initial response from OpenAI (no context message needed since metadata is in system prompt)
-                                console.log(`[${connectionId}][${callSid}] Requesting initial response from OpenAI.`);
-                                openAiWs.send(JSON.stringify({
-                                    type: 'response.create',
-                                    response: {
-                                        modalities: ["text", "audio"],
-                                        instructions: "Always provide both text and audio responses. Include the text version of everything you say."
-                                    }
-                                }));
+                               
                                 broadcastStatus(callSid, 'Requested initial response');
                                 break;
 
@@ -887,11 +928,15 @@ fastify.post('/call', async (request, reply) => {
   }
 
   try {
+    // Get the appropriate phone number based on destination
+    const fromNumber = getPhoneNumberForDestination(phoneNumberTo);
+    console.log(`Selected phone number: ${fromNumber} for destination: ${phoneNumberTo}`);
+
     // Initiate the call using Twilio
     const call = await client.calls.create({
       url: `https://${DOMAIN}/twiml`,
       to: phoneNumberTo,
-      from: PHONE_NUMBER_FROM,
+      from: fromNumber, // Use the conditionally selected number
     });
 
     // Store the prompt for this call
@@ -1247,3 +1292,11 @@ fastify.listen({ port: PORT, host: '0.0.0.0' }, (err) => {
         console.log('Server started without initiating an automatic call. Ready to receive API requests.');
     }
 });
+
+// Log phone number configuration
+console.log('Phone number configuration:');
+console.log(`  US/Default: ${PHONE_NUMBERS.US}`);
+console.log(`  EU: ${PHONE_NUMBERS.EU} ${!PHONE_NUMBER_EU ? '(using fallback)' : ''}`);
+if (!PHONE_NUMBER_EU) {
+  console.warn('PHONE_NUMBER_EU not set - using fallback number +4552516958 for European destinations');
+}
