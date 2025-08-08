@@ -250,7 +250,7 @@ async function isNumberAllowed(to) {
       // Add the new number to the allowed list
       console.log(`Adding new number to allowed list: ${to}`);
       global.allowedNumbers[to] = true;
-      console.log(`Current allowed numbers:, Object.keys(global.allowedNumbers).join(', ')`);
+      console.log(`Current allowed numbers: ${Object.keys(global.allowedNumbers).join(', ')}`);
       return true;
     }
 
@@ -431,14 +431,14 @@ fastify.register(async (fastify) => {
                          }
                          break;
                      default:
-                         console.log(`[${connectionId}] Received non-media event:, data.event`);
+                         console.log(`[${connectionId}] Received non-media event: ${data.event}`);
                          if (callSid) { broadcastStatus(callSid, `Received event: ${data.event}`); }
                          break;
                  }
-             } catch (error) {
-                 console.error(`[${connectionId}] Error parsing Twilio message:, error.message`);
-                 if (callSid) { broadcastStatus(callSid, `Error parsing Twilio message: ${error.message}`); }
-             }
+                              } catch (error) {
+                     console.error(`[${connectionId}] Error parsing Twilio message: ${error.message}`);
+                     if (callSid) { broadcastStatus(callSid, `Error parsing Twilio message: ${error.message}`); }
+                 }
         });
 
         socket.on('close', (code, reason) => {
@@ -506,17 +506,17 @@ fastify.register(async (fastify) => {
 
                         // Log detailed content for transcript-related events
                         if (response.type.includes('content') || response.type.includes('conversation') || response.type.includes('response')) {
-                            console.log(`[${connectionId}][${callSid}] DETAILED EVENT DATA:, JSON.stringify(response, null, 2)`);
+                            console.log(`[${connectionId}][${callSid}] DETAILED EVENT DATA: ${JSON.stringify(response, null, 2)}`);
                         }
 
                         // Log the full response if it's an error type
                         if (response.type === 'error') {
-                            console.error(`[${connectionId}][${callSid}] Received FULL OpenAI error event:, JSON.stringify(response, null, 2)`);
+                            console.error(`[${connectionId}][${callSid}] Received FULL OpenAI error event: ${JSON.stringify(response, null, 2)}`);
                         }
 
                         // Log content-related events in detail
                         if (response.type.includes('content') || response.type.includes('transcript')) {
-                            console.log(`[${connectionId}][${callSid}] CONTENT EVENT DETAILS:, JSON.stringify(response, null, 2)`);
+                            console.log(`[${connectionId}][${callSid}] CONTENT EVENT DETAILS: ${JSON.stringify(response, null, 2)}`);
                         }
 
                         if (LOG_EVENT_TYPES.includes(response.type)) {
@@ -568,7 +568,7 @@ fastify.register(async (fastify) => {
                                 break;
 
                             case 'conversation.item.created':
-                                console.log(`[${connectionId}][${callSid}] Conversation item created:, JSON.stringify(response.item, null, 2)`);
+                                console.log(`[${connectionId}][${callSid}] Conversation item created: ${JSON.stringify(response.item, null, 2)}`);
 
                                 // Handle user messages
                                 if (response.item?.role === 'user' && response.item?.content) {
@@ -578,13 +578,13 @@ fastify.register(async (fastify) => {
                                         .join(' ');
 
                                     if (userText && userText.trim()) {
-                                        console.log(`[${connectionId}][${callSid}] Capturing user text:, userText`);
+                                        console.log(`[${connectionId}][${callSid}] Capturing user text: ${userText}`);
                                         if (!callTranscripts.has(callSid)) {
                                             console.log(`[${connectionId}][${callSid}] Creating new transcript array for user input`);
                                             callTranscripts.set(callSid, []);
                                         }
                                         callTranscripts.get(callSid).push({ role: 'user', text: userText });
-                                        console.log(`[${connectionId}][${callSid}] Current transcript length after user input:, callTranscripts.get(callSid).length`);
+                                        console.log(`[${connectionId}][${callSid}] Current transcript length after user input: ${callTranscripts.get(callSid).length}`);
                                     }
                                 }
 
@@ -609,15 +609,15 @@ fastify.register(async (fastify) => {
                                 break;
 
                             case 'conversation.item.input_audio_transcription.completed':
-                                console.log(`[${connectionId}][${callSid}] User speech transcription completed:, JSON.stringify(response, null, 2)`);
+                                console.log(`[${connectionId}][${callSid}] User speech transcription completed: ${JSON.stringify(response, null, 2)}`);
                                 if (response.transcript && response.transcript.trim()) {
-                                    console.log(`[${connectionId}][${callSid}] Capturing user speech transcript:, response.transcript`);
+                                    console.log(`[${connectionId}][${callSid}] Capturing user speech transcript: ${response.transcript}`);
                                     if (!callTranscripts.has(callSid)) {
                                         console.log(`[${connectionId}][${callSid}] Creating new transcript array for user speech`);
                                         callTranscripts.set(callSid, []);
                                     }
                                     callTranscripts.get(callSid).push({ role: 'user', text: response.transcript });
-                                    console.log(`[${connectionId}][${callSid}] Current transcript length after user speech:, callTranscripts.get(callSid).length`);
+                                    console.log(`[${connectionId}][${callSid}] Current transcript length after user speech: ${callTranscripts.get(callSid).length}`);
                                 }
                                 break;
 
@@ -646,7 +646,7 @@ fastify.register(async (fastify) => {
                                 break;
 
                             case 'response.output_item.added':
-                                console.log(`[${connectionId}][${callSid}] Output item added:, JSON.stringify(response, null, 2)`);
+                                console.log(`[${connectionId}][${callSid}] Output item added: ${JSON.stringify(response, null, 2)}`);
                                 // Prepare for incoming text/audio parts when assistant item is added
                                 if (response.output_item && response.output_item.role === 'assistant') {
                                     console.log(`[${connectionId}][${callSid}] ✅ ASSISTANT OUTPUT ITEM ADDED - preparing for transcript`);
@@ -654,10 +654,10 @@ fastify.register(async (fastify) => {
                                 break;
 
                             case 'response.audio_transcript.delta':
-                                console.log(`[${connectionId}][${callSid}] Audio transcript delta:, JSON.stringify(response, null, 2)`);
+                                console.log(`[${connectionId}][${callSid}] Audio transcript delta: ${JSON.stringify(response, null, 2)}`);
                                 const transcriptPart = response.delta?.transcript;
                                 if (transcriptPart?.trim()) {
-                                    console.log(`[${connectionId}][${callSid}] ✅ REAL AI TRANSCRIPT DELTA:, transcriptPart`);
+                                    console.log(`[${connectionId}][${callSid}] ✅ REAL AI TRANSCRIPT DELTA: ${transcriptPart}`);
                                     if (!callTranscripts.has(callSid)) {
                                         callTranscripts.set(callSid, []);
                                     }
@@ -677,12 +677,12 @@ fastify.register(async (fastify) => {
                                 break;
 
                             case 'response.audio_transcript.done':
-                                console.log(`[${connectionId}][${callSid}] Audio transcript done:, JSON.stringify(response, null, 2)`);
+                                console.log(`[${connectionId}][${callSid}] Audio transcript done: ${JSON.stringify(response, null, 2)}`);
                                 console.log(`[${connectionId}][${callSid}] ✅ ASSISTANT AUDIO TRANSCRIPT COMPLETE`);
                                 break;
 
                             case 'response.done':
-                                console.log(`[${connectionId}][${callSid}] Response done:, JSON.stringify(response, null, 2)`);
+                                console.log(`[${connectionId}][${callSid}] Response done: ${JSON.stringify(response, null, 2)}`);
                                 aiSpeaking = false; // AI finished speaking
 
                                 // Pull the final transcript from response.done
@@ -690,7 +690,7 @@ fastify.register(async (fastify) => {
                                 const assistantItem = items.find(i => i.role === 'assistant');
                                 const finalText = assistantItem?.content?.[0]?.transcript;
                                 if (finalText?.trim()) {
-                                    console.log(`[${connectionId}][${callSid}] ✅ FINAL AI TRANSCRIPT:, finalText`);
+                                    console.log(`[${connectionId}][${callSid}] ✅ FINAL AI TRANSCRIPT: ${finalText}`);
                                     if (!callTranscripts.has(callSid)) {
                                         callTranscripts.set(callSid, []);
                                     }
@@ -711,7 +711,7 @@ fastify.register(async (fastify) => {
                                 break;
 
                             case 'response.cancelled':
-                                console.log(`[${connectionId}][${callSid}] Response cancelled:, JSON.stringify(response, null, 2)`);
+                                console.log(`[${connectionId}][${callSid}] Response cancelled: ${JSON.stringify(response, null, 2)}`);
                                 aiSpeaking = false; // AI was interrupted/cancelled
                                 console.log(`[${connectionId}][${callSid}] ✅ AI RESPONSE CANCELLED - user can interrupt`);
                                 broadcastStatus(callSid, 'AI response cancelled due to interruption');
@@ -721,8 +721,8 @@ fastify.register(async (fastify) => {
                                 // Log other event types if necessary, already handled by LOG_EVENT_TYPES check above
                                 break;
                 }
-            } catch (error) {
-                        console.error(`[${connectionId}][${callSid}] Error handling OpenAI message:, error.message`);
+                            } catch (error) {
+                        console.error(`[${connectionId}][${callSid}] Error handling OpenAI message: ${error.message}`);
                         broadcastStatus(callSid, `Error handling OpenAI message: ${error.message}`);
                     }
                 });
@@ -737,12 +737,12 @@ fastify.register(async (fastify) => {
         });
 
         openAiWs.on('error', (error) => {
-                    console.error(`[${connectionId}][${callSid}] OpenAI WebSocket error:, error.message`);
+                    console.error(`[${connectionId}][${callSid}] OpenAI WebSocket error: ${error.message}`);
                 broadcastStatus(callSid, `OpenAI WebSocket error: ${error.message}`);
                 });
 
              } catch (error) {
-                console.error(`[${connectionId}][${callSid}] Error in OpenAI connection setup:, error.message`);
+                console.error(`[${connectionId}][${callSid}] Error in OpenAI connection setup: ${error.message}`);
                 broadcastStatus(callSid, `Error in OpenAI connection setup: ${error.message}`);
              }
         }; // End of setupOpenAIConnection function
@@ -784,7 +784,7 @@ fastify.register(async (fastify) => {
                             socket.send(JSON.stringify(statusData));
                             console.log(`[${monitorId}] Sent initial status data to client`);
                         } catch (err) {
-                            console.error(`[${monitorId}] Error sending initial status:, err.message`);
+                            console.error(`[${monitorId}] Error sending initial status: ${err.message}`);
                         }
                     } else {
                         console.warn(`[${monitorId}] Socket not open when trying to send initial status (State: ${socket.readyState})`);
@@ -792,7 +792,7 @@ fastify.register(async (fastify) => {
 
             // Handle errors
                     socket.on('error', (error) => {
-                        console.error(`[${monitorId}] Status monitor WebSocket error:, error.message`);
+                        console.error(`[${monitorId}] Status monitor WebSocket error: ${error.message}`);
                         statusClients.delete(socket);
                     });
 
@@ -807,7 +807,7 @@ fastify.register(async (fastify) => {
                     try {
                                 socket.send(JSON.stringify({ type: 'ping', timestamp: new Date().toISOString() }));
                     } catch (error) {
-                                console.error(`[${monitorId}] Error sending ping:, error.message`);
+                                console.error(`[${monitorId}] Error sending ping: ${error.message}`);
                         clearInterval(pingInterval);
                     }
                 } else {
@@ -836,13 +836,13 @@ fastify.register(async (fastify) => {
                     return;
                 }
         } catch (error) {
-                console.error(`[${monitorId}] Error in status monitor setup after delay:, error.message`);
+                console.error(`[${monitorId}] Error in status monitor setup after delay: ${error.message}`);
                 console.error(error.stack);
                 if (socket && typeof socket.close === 'function') {
                     try {
                         socket.close(1011, 'Internal Server Error');
                     } catch (err) {
-                        console.error(`[${monitorId}] Error closing socket after error:, err.message`);
+                        console.error(`[${monitorId}] Error closing socket after error: ${err.message}`);
                     }
                 }
             }
@@ -1044,10 +1044,10 @@ fastify.post('/call-status', async (request, reply) => {
     }
 
     console.log(`[${callSid}] Status changed to: ${status}`);
-    console.log(`[${callSid}] Current transcript exists:, callTranscripts.has(callSid)`);
+    console.log(`[${callSid}] Current transcript exists: ${callTranscripts.has(callSid)}`);
     if (callTranscripts.has(callSid)) {
-      console.log(`[${callSid}] Current transcript length:, callTranscripts.get(callSid).length`);
-      console.log(`[${callSid}] Current transcript content:, JSON.stringify(callTranscripts.get(callSid), null, 2)`);
+      console.log(`[${callSid}] Current transcript length: ${callTranscripts.get(callSid).length}`);
+      console.log(`[${callSid}] Current transcript content: ${JSON.stringify(callTranscripts.get(callSid), null, 2)}`);
     }
 
     broadcastStatus(callSid, `Call status: ${status}`);
@@ -1063,8 +1063,8 @@ fastify.post('/call-status', async (request, reply) => {
           try {
             socket.close(1000, 'Call ended');
             console.log(`[${callSid}] WebSocket closed successfully`);
-          } catch(e) {
-            console.error(`[${callSid}] Error closing Twilio socket:, e.message`);
+                      } catch(e) {
+            console.error(`[${callSid}] Error closing Twilio socket: ${e.message}`);
           }
         }
         activeWebSockets.delete(callSid);
@@ -1081,15 +1081,15 @@ fastify.post('/call-status', async (request, reply) => {
         if (callTranscripts.has(callSid)) {
           console.log(`\n[${callSid}] Found transcript to send to n8n`);
           const rawTranscript = callTranscripts.get(callSid);
-          console.log(`[${callSid}] Raw transcript entries:, JSON.stringify(rawTranscript, null, 2)`);
+          console.log(`[${callSid}] Raw transcript entries: ${JSON.stringify(rawTranscript, null, 2)}`);
 
           const transcript = rawTranscript
             .filter(x => x.role !== 'separator')
             .map(x => `${x.role === 'user' ? 'User' : 'Assistant'}: ${x.text}`)
             .join('\n');
 
-          console.log(`[${callSid}] Prepared transcript for n8n:, transcript`);
-          console.log(`[${callSid}] N8N_WEBHOOK_URL:, process.env.N8N_WEBHOOK_URL`);
+          console.log(`[${callSid}] Prepared transcript for n8n: ${transcript}`);
+          console.log(`[${callSid}] N8N_WEBHOOK_URL: ${process.env.N8N_WEBHOOK_URL}`);
 
         try {
           console.log(`[${callSid}] Attempting to send transcript to n8n...`);
@@ -1103,14 +1103,14 @@ fastify.post('/call-status', async (request, reply) => {
             })
           });
 
-          console.log(`[${callSid}] n8n response status:, response.status`);
+          console.log(`[${callSid}] n8n response status: ${response.status}`);
           const responseText = await response.text();
-          console.log(`[${callSid}] n8n response body:, responseText`);
+          console.log(`[${callSid}] n8n response body: ${responseText}`);
 
           console.log(`[${callSid}] Transcript pushed to n8n successfully`);
         } catch (err) {
-          console.error(`[${callSid}] Failed to push transcript:, err.message`);
-          console.error(`[${callSid}] Error stack:, err.stack`);
+          console.error(`[${callSid}] Failed to push transcript: ${err.message}`);
+          console.error(`[${callSid}] Error stack: ${err.stack}`);
         }
 
         callTranscripts.delete(callSid);
@@ -1217,7 +1217,7 @@ fastify.post('/make-call', async (request, reply) => {
       // Store metadata for this call
       if (metadata) {
         callMetadata.set(call.sid, metadata);
-        console.log(`Stored metadata for call ${call.sid}:, JSON.stringify(metadata, null, 2)`);
+        console.log(`Stored metadata for call ${call.sid}: ${JSON.stringify(metadata, null, 2)}`);
       }
 
       return {
@@ -1226,7 +1226,7 @@ fastify.post('/make-call', async (request, reply) => {
         callSid: call.sid
       };
     } catch (callError) {
-      console.error(`Error making call to ${phoneNumber}:, callError`);
+      console.error(`Error making call to ${phoneNumber}: ${callError}`);
       return reply.code(500).send({
         success: false,
         message: `Error making call: ${callError.message}`
